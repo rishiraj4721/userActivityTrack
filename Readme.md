@@ -12,13 +12,23 @@ This JavaScript library can be used to track user interaction on a webiste or we
 - Easy to include more HTML tags and elements
 - No visible performance decrease in loading and unloading webpages
 
+## Demo
+This repository contains an example webpage showing usage of this library. 
+Run the server in the project direcotry using the following command in terminal.
+```
+php -S 127.0.0.1:8000
+```
+The webpage can be accessed at _localhost:8000/docs_.
+
+Interact with various buttons on the webpage and check the console for the data collected for each action.
 
 ## Tech
 
 This tracking library uses a number of open source projects to work properly:
 
-- [Interactor] - HTML enhanced for web apps!
-- [Analytics.io] - awesome web-based text editor
+- [Interactor] - A simple, light-weight (< 5KB minified), no dependency, front-end website interaction tracker for personal websites and web projects.
+- [Analytics.io] - A lightweight analytics abstraction library for tracking page views, custom events, & identify visitors.
+- [MySQL] - An open-source relational database management system
 
 
 And of course the library itself is open source with a [public repository][trac]
@@ -253,3 +263,4 @@ $conn->commit();
    [git-repo-url]: <https://github.com/rishiraj4721/userActivityTrack.git>
    [Interactor]: <https://github.com/greenstick/interactor>
    [Analytics.io]: <https://github.com/davidwells/analytics>
+   [MySQL]: <https://www.mysql.com/>
