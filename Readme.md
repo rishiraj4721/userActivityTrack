@@ -17,18 +17,11 @@ This JavaScript library can be used to track user interaction on a webiste or we
 
 This tracking library uses a number of open source projects to work properly:
 
-- [AngularJS] - HTML enhanced for web apps!
-- [Ace Editor] - awesome web-based text editor
-- [markdown-it] - Markdown parser done right. Fast and easy to extend.
-- [Twitter Bootstrap] - great UI boilerplate for modern web apps
-- [node.js] - evented I/O for the backend
-- [Express] - fast node.js network app framework [@tjholowaychuk]
-- [Gulp] - the streaming build system
-- [Breakdance](https://breakdance.github.io/breakdance/) - HTML
-to Markdown converter
-- [jQuery] - duh
+- [Interactor] - HTML enhanced for web apps!
+- [Analytics.io] - awesome web-based text editor
 
-And of course library itself is open source with a [public repository][dill]
+
+And of course the library itself is open source with a [public repository][trac]
  on GitHub.
 
 ## Installation
@@ -37,13 +30,13 @@ Include the following snippet of code at the end of a webpage to be tracked.
 
 ```
 <script src="https://unpkg.com/analytics/dist/analytics.min.js"></script>
-<script src="path_to_track.js"></script>
+<script src="<path_to_track.js>"></script>
 <script type="text/javascript">
     const Analytics = _analytics.init({
         app: 'interactor',
         version: 1,
         plugins: [
-            pluginTwo
+            pluginTrack
         ]
     })
     Analytics.page(interactor)
@@ -53,7 +46,7 @@ Include the following snippet of code at the end of a webpage to be tracked.
         interactionElementTag: [],
         interactionElementId: [],
         interactionEvents: ['mouseup'],
-        endpoint: './../submit3.php',
+        endpoint: './../submit.php',
         async: true,
         debug: true,
         userid: user
@@ -65,117 +58,198 @@ Include the following snippet of code at the end of a webpage to be tracked.
 </script>
 ```
 
-For tracking more HTML tags...
+For tracking more HTML tags, add tag names in interactor object by...
 
 ```sh
-interactionElementTag: ["list","of","desired","tags"]
+interactionElementTag: ["<list>","<of>","<desired>","<tags>"]
 ```
-For tracking elements by class ID...
+For tracking elements by class ID, add class IDs in interactor object by...
 
 ```sh
-interactionElementID: ["list","of","desired","element","IDs"]
+interactionElementID: ["<list>","<of>","<desired>","<element>","<IDs>"]
+```
+Send all the user and activity data to server endpoint by...
+```
+endpoint: '<server_endpoint_path>'
 ```
 
-## Development
-
-Want to contribute? Great!
-
-Dillinger uses Gulp + Webpack for fast developing.
-Make a change in your file and instantaneously see your updates!
-
-Open your favorite Terminal and run these commands.
-
-First Tab:
-
-```sh
-node app
+## Using in a project
+Include the _Analytics.io_ library in html
+```
+<script src="https://unpkg.com/analytics/dist/analytics.min.js"></script>
+```
+Place the **track.js** file in your project folder and include the file in the webpage html source.
+```
+<script src="<path_to_track.js>"></script>
 ```
 
-Second Tab:
+## Sending data to server
+When the the page loads, the library collects information about the user device and browser. It also identifies the user using a locally stored cookie.
 
-```sh
-gulp watch
+The library then keeps track of all the user actions on the webpage, for example, any buttons or hyperlinks clicked. 
+
+This data is then sent to server just before the webpage unloads where it is then stored in a database.
+
+## Server side data storage
+The included _submit.php_ server saves the received data to a MySQL database. The server connects to the database using the following credentials.
+```
+$servername = "localhost";
+$username = "root";
+$password = "hellothere";
+$dbname = "user_activity";
+```
+The database has two tables.
+### User sessions(MySQL table)
+```
+CREATE TABLE `user_sessions` (
+  `sessionid` int NOT NULL AUTO_INCREMENT,
+  `userid` varchar(45) NOT NULL,
+  `language` varchar(45) DEFAULT NULL,
+  `platform` text,
+  `loadTime` datetime DEFAULT NULL,
+  `unloadTime` datetime DEFAULT NULL,
+  `port` int DEFAULT NULL,
+  `endpoint` text,
+  `page_location` text,
+  `page_href` text,
+  `page_origin` text,
+  `page_title` text,
+  `clientStart_name` text,
+  `clientStart_innerWidth` int DEFAULT NULL,
+  `clientStart_innerHeight` int DEFAULT NULL,
+  `clientStart_outerWidth` int DEFAULT NULL,
+  `clientStart_outerHeight` int DEFAULT NULL,
+  `clientEnd_name` text,
+  `clientEnd_innerWidth` int DEFAULT NULL,
+  `clientEnd_innerHeight` int DEFAULT NULL,
+  `clientEnd_outerWidth` int DEFAULT NULL,
+  `clientEnd_outerHeight` int DEFAULT NULL,
+  PRIMARY KEY (`sessionid`,`userid`),
+  UNIQUE KEY `sessionid_UNIQUE` (`sessionid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+```
+### Interactions(MySQL table)
+```
+CREATE TABLE `interactions` (
+  `eventid` int NOT NULL AUTO_INCREMENT,
+  `sessionid` int NOT NULL,
+  `userid` varchar(45) DEFAULT NULL,
+  `type` varchar(100) DEFAULT NULL,
+  `event` varchar(100) DEFAULT NULL,
+  `targetTag` varchar(100) DEFAULT NULL,
+  `targetClasses` varchar(100) DEFAULT NULL,
+  `content` varchar(100) DEFAULT NULL,
+  `clientPosition_x` int DEFAULT NULL,
+  `clientPosition_y` int DEFAULT NULL,
+  `screenPosition_x` int DEFAULT NULL,
+  `screenPosition_y` int DEFAULT NULL,
+  `createdAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`eventid`,`sessionid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
-(optional) Third:
+Data stored using MySQL insert querys
 
-```sh
-karma test
+### User session data
+
+```
+$loadt = $data->loadTime;
+$unloadt = $data->unloadTime;
+
+$sqlins = 'INSERT INTO user_sessions (
+    userid,
+    language,
+    platform,
+    loadTime,
+    unloadTime,
+    port,
+    endpoint,
+    page_location,
+    page_href,
+    page_origin,
+    page_title,
+    clientStart_name,
+    clientStart_innerWidth,
+    clientStart_innerHeight,
+    clientStart_outerWidth,
+    clientStart_outerHeight,
+    clientEnd_name,
+    clientEnd_innerWidth,
+    clientEnd_innerHeight,
+    clientEnd_outerWidth,
+    clientEnd_outerHeight
+)
+VALUES (
+    "'.$data->user.'",
+    "'.$data->language.'",
+    "'.$data->platform.'",
+    STR_TO_DATE("'.$loadt.'","%Y-%m-%dT%H:%i:%s"),
+    STR_TO_DATE("'.$unloadt.'","%Y-%m-%dT%H:%i:%s"),
+    '.(int)$data->port.',
+    "'.$data->endpoint.'",
+    "'.$data->page->location.'",
+    "'.$data->page->href.'",
+    "'.$data->page->origin.'",
+    "'.$data->page->title.'",
+    "'.$data->clientStart->name.'",
+    '.(int)$data->clientStart->innerWidth.',
+    '.(int)$data->clientStart->innerHeight.',
+    '.(int)$data->clientStart->outerWidth.',
+    '.(int)$data->clientStart->outerHeight.',
+    "'.$data->clientEnd->name.'",
+    '.(int)$data->clientEnd->innerWidth.',
+    '.(int)$data->clientEnd->innerHeight.',
+    '.(int)$data->clientEnd->outerWidth.',
+    '.(int)$data->clientEnd->outerHeight.'
+)';
+$sqlstate = $conn->prepare($sqlins);
+$sqlstate->execute();
 ```
 
-#### Building for source
+### User interaction/activity data
 
-For production release:
-
-```sh
-gulp build --prod
 ```
+$last_id = $conn->lastInsertId();
+$conn->beginTransaction();
 
-Generating pre-built zip archives for distribution:
-
-```sh
-gulp build dist --prod
+foreach($data->interactions as $x) {
+    $created = $x->createdAt;
+    $sqlins = 'INSERT INTO interactions (
+        sessionid,
+        userid, 
+        type,
+        event, 
+        targetTag,
+        targetClasses,
+        Content, 
+        clientPosition_x,
+        clientPosition_y,
+        screenPosition_x,
+        screenPosition_y,
+        createdAt
+    )
+    VALUES (
+        '.$last_id.',
+        "'.$data->user.'",
+        "'.$x->type.'",
+        "'.$x->event.'",
+        "'.$x->targetTag.'",
+        "'.$x->targetClasses.'",
+        "'.$x->content.'",
+        '.(int)$x->clientPosition->x.',
+        '.(int)$x->clientPosition->y.',
+        '.(int)$x->screenPosition->x.',
+        '.(int)$x->screenPosition->y.',
+        STR_TO_DATE("'.$created.'","%Y-%m-%dT%H:%i:%s")
+    )';
+    $conn->exec($sqlins);
+}
+$conn->commit();
 ```
-
-## Docker
-
-Dillinger is very easy to install and deploy in a Docker container.
-
-By default, the Docker will expose port 8080, so change this within the
-Dockerfile if necessary. When ready, simply use the Dockerfile to
-build the image.
-
-```sh
-cd dillinger
-docker build -t <youruser>/dillinger:${package.json.version} .
-```
-
-This will create the dillinger image and pull in the necessary dependencies.
-Be sure to swap out `${package.json.version}` with the actual
-version of Dillinger.
-
-Once done, run the Docker image and map the port to whatever you wish on
-your host. In this example, we simply map port 8000 of the host to
-port 8080 of the Docker (or whatever port was exposed in the Dockerfile):
-
-```sh
-docker run -d -p 8000:8080 --restart=always --cap-add=SYS_ADMIN --name=dillinger <youruser>/dillinger:${package.json.version}
-```
-
-> Note: `--capt-add=SYS-ADMIN` is required for PDF rendering.
-
-Verify the deployment by navigating to your server address in
-your preferred browser.
-
-```sh
-127.0.0.1:8000
-```
-
-## License
-
-MIT
-
-**Free Software, Hell Yeah!**
 
 [//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
 
-   [dill]: <https://github.com/joemccann/dillinger>
-   [git-repo-url]: <https://github.com/joemccann/dillinger.git>
-   [john gruber]: <http://daringfireball.net>
-   [df1]: <http://daringfireball.net/projects/markdown/>
-   [markdown-it]: <https://github.com/markdown-it/markdown-it>
-   [Ace Editor]: <http://ace.ajax.org>
-   [node.js]: <http://nodejs.org>
-   [Twitter Bootstrap]: <http://twitter.github.com/bootstrap/>
-   [jQuery]: <http://jquery.com>
-   [@tjholowaychuk]: <http://twitter.com/tjholowaychuk>
-   [express]: <http://expressjs.com>
-   [AngularJS]: <http://angularjs.org>
-   [Gulp]: <http://gulpjs.com>
-
-   [PlDb]: <https://github.com/joemccann/dillinger/tree/master/plugins/dropbox/README.md>
-   [PlGh]: <https://github.com/joemccann/dillinger/tree/master/plugins/github/README.md>
-   [PlGd]: <https://github.com/joemccann/dillinger/tree/master/plugins/googledrive/README.md>
-   [PlOd]: <https://github.com/joemccann/dillinger/tree/master/plugins/onedrive/README.md>
-   [PlMe]: <https://github.com/joemccann/dillinger/tree/master/plugins/medium/README.md>
-   [PlGa]: <https://github.com/RahulHP/dillinger/blob/master/plugins/googleanalytics/README.md>
+   [trac]: <https://github.com/rishiraj4721/userActivityTrack>
+   [git-repo-url]: <https://github.com/rishiraj4721/userActivityTrack.git>
+   [Interactor]: <https://github.com/greenstick/interactor>
+   [Analytics.io]: <https://github.com/davidwells/analytics>

@@ -11,8 +11,8 @@ try {
     $fp = fopen('results.txt', 'a');
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $loadt = date('Y-m-d H:i:s', strtotime($data->loadTime));
-    $unloadt = date('Y-m-d H:i:s', strtotime($data->unloadTime));
+    $loadt = $data->loadTime;
+    $unloadt = $data->unloadTime;
 
     $sqlins = 'INSERT INTO user_sessions (
         userid, language, platform,
@@ -30,8 +30,8 @@ try {
         "'.$data->user.'",
         "'.$data->language.'",
         "'.$data->platform.'",
-        STR_TO_DATE("'.$loadt.'","%Y-%m-%d %H:%i:%s"),
-        STR_TO_DATE("'.$unloadt.'","%Y-%m-%d %H:%i:%s"),
+        STR_TO_DATE("'.$loadt.'","%Y-%m-%dT%H:%i:%s"),
+        STR_TO_DATE("'.$unloadt.'","%Y-%m-%dT%H:%i:%s"),
         '.(int)$data->port.',
         "'.$data->endpoint.'",
         "'.$data->page->location.'",
@@ -50,16 +50,12 @@ try {
         '.(int)$data->clientEnd->outerHeight.'
     )';
     $sqlstate = $conn->prepare($sqlins);
-    // fwrite($fp,$sqlins);
     $sqlstate->execute();
     $last_id = $conn->lastInsertId();
 
-    // fwrite($fp,$data->);
     $conn->beginTransaction();
     foreach($data->interactions as $x) {
-        // fwrite($fp,$x->type);
         $created = $x->createdAt;
-        // fwrite($fp,gettype($created));
         $sqlins = 'INSERT INTO interactions (
             sessionid, userid, 
             type, event, 
@@ -85,12 +81,11 @@ try {
             '.(int)$x->screenPosition->y.',
             STR_TO_DATE("'.$created.'","%Y-%m-%dT%H:%i:%s")
         )';
-        // fwrite($fp,$sqlins);
         $conn->exec($sqlins);
     }
     $conn->commit();
-    // fwrite($fp,'done');
     fclose($fp);
+
 } catch (PDOException $e) {
     $fp = fopen('results.txt', 'a');
     fwrite($fp, $e);

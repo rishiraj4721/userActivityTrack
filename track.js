@@ -1,4 +1,4 @@
-const pluginTwo = {
+const pluginTrack = {
     name: 'actionTrack',
     page: ({ payload }) => {
         console.log('page view fired', payload)
